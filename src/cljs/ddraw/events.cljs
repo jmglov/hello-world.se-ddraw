@@ -9,7 +9,7 @@
    db/default-db))
 
 (rf/reg-event-db
- ::init-sqs
+ ::authenticated
  (fn  [db _]
    (assoc db :sqs-q (sqs/init!))))
 
