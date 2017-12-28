@@ -4,7 +4,7 @@
             [ddraw.config :as config]
             [ddraw.events :as events]
             [ddraw.views :as views]
-            [re-frame.core :as re-frame]
+            [re-frame.core :as rf]
             [reagent.core :as r]))
 
 (enable-console-print!)
@@ -21,7 +21,7 @@
     (println "dev mode")))
 
 (defn mount-root []
-  (re-frame/clear-subscription-cache!)
+  (rf/clear-subscription-cache!)
   (r/render [views/main-panel]
             (.getElementById js/document "app")))
 
@@ -57,7 +57,7 @@
                                                  (if err
                                                    (println "Error:" err))
                                                  (do
-                                                   (println "Instantiate AWS service objects here"))))))
+                                                   (rf/dispatch-sync [::events/init-sqs]))))))
                                  :onFailure
                                  (fn [err]
                                    (println "error" err))
@@ -72,7 +72,7 @@
   (aset js/AWS.config "region" aws-region))
 
 (defn ^:export init []
-  (re-frame/dispatch-sync [::events/initialize-db])
+  (rf/dispatch-sync [::events/initialize-db])
   (dev-setup)
   (mount-root)
   (init-aws))

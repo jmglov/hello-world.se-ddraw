@@ -1,8 +1,20 @@
 (ns ddraw.events
-  (:require [re-frame.core :as re-frame]
-            [ddraw.db :as db]))
+  (:require [ddraw.db :as db]
+            [ddraw.sqs :as sqs]
+            [re-frame.core :as rf]))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::initialize-db
  (fn  [_ _]
    db/default-db))
+
+(rf/reg-event-db
+ ::init-sqs
+ (fn  [db _]
+   (assoc db :sqs-q (sqs/init!))))
+
+(rf/reg-event-db
+ ::receive-message
+ (fn  [{:keys [sqs-q] :as db} _]
+   (sqs/receive sqs-q)
+   db))
