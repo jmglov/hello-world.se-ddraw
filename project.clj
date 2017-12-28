@@ -2,6 +2,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.908"]
                  [cljsjs/aws-sdk-js "2.94.0-0"]
+                 [cljsjs/amazon-cognito-identity-js "1.21.0-0"]
                  [re-frame "0.10.2"]
                  [reagent "0.7.0"]]
 
