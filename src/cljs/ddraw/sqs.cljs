@@ -19,6 +19,14 @@
                     (println "Error creating queue:" (.-message err))
                     (on-created-fn (.-QueueUrl data))))))
 
+(defn get-arn [sqs queue-url arn-fn]
+  (.getQueueAttributes sqs (clj->js {:QueueUrl queue-url
+                                     :AttributeNames ["QueueArn"]})
+                       (fn [err data]
+                         (if err
+                           (println "Error getting queue ARN:" (.-message err))
+                           (arn-fn (-> data .-Attributes .-QueueArn))))))
+
 (defn receive [sqs queue-url]
   (println "Receiving message...")
   (.receiveMessage sqs (clj->js (assoc receive-params :QueueUrl queue-url))
@@ -41,3 +49,13 @@
 
                        :default
                        (println "No message received")))))
+
+(defn set-policy [sqs queue-url policy]
+  (let [policy {:Version "2012-10-17"
+                :Statement [policy]}]
+    (.setQueueAttributes sqs (clj->js {:QueueUrl queue-url
+                                       :Attributes {:Policy (.stringify js/JSON (clj->js policy))}})
+                         (fn [err data]
+                           (if err
+                             (println "Error setting policy:" (.-message err))
+                             (println "Set policy"))))))
