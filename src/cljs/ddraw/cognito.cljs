@@ -1,12 +1,11 @@
 (ns ddraw.cognito
   (:require [cljsjs.aws-sdk-js]
             [cljsjs.amazon-cognito-identity-js]
-            [ddraw.events :as events]
             [re-frame.core :as rf]))
 
 (def aws-region "eu-west-1")
 
-(defn login! [user-pool-id client-id identity-pool-id username cur-password new-password]
+(defn login! [user-pool-id client-id identity-pool-id username cur-password new-password on-auth-fn]
   (aset js/AWSCognito.config "region" aws-region)
   (let [authentication-details (js/AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails.
                                 (clj->js {:Username username
@@ -36,9 +35,8 @@
                                      (.refresh js/AWS.config.credentials
                                                (fn [err]
                                                  (if err
-                                                   (println "Error:" err))
-                                                 (do
-                                                   (rf/dispatch-sync [::events/authenticated]))))))
+                                                   (println "Error:" (.-message err))
+                                                   (on-auth-fn))))))
                                  :onFailure
                                  (fn [err]
                                    (println "error" err))

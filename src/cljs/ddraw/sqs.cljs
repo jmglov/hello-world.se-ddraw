@@ -1,11 +1,9 @@
 (ns ddraw.sqs
   (:require [cljsjs.aws-sdk-js]))
 
-(def queue-url "https://sqs.eu-west-1.amazonaws.com/166399666252/ddraw.fifo")
 (def receive-params {:AttributeNames ["SentTimestamp"]
                      :MaxNumberOfMessages 1
                      :MessageAttributeNames ["All"]
-                     :QueueUrl queue-url
                      :VisibilityTimeout 2
                      :WaitTimeSeconds 0})
 
@@ -13,13 +11,21 @@
   (println "Initialising SQS")
   (js/AWS.SQS. (clj->js {:apiVersion "2012-11-05"})))
 
-(defn receive [q]
+(defn create [sqs q-name on-created-fn]
+  (println "Creating queue...")
+  (.createQueue sqs (clj->js {:QueueName q-name})
+                (fn [err data]
+                  (if err
+                    (println "Error creating queue:" (.-message err))
+                    (on-created-fn (.-QueueUrl data))))))
+
+(defn receive [sqs queue-url]
   (println "Receiving message...")
-  (.receiveMessage q (clj->js receive-params)
+  (.receiveMessage sqs (clj->js (assoc receive-params :QueueUrl queue-url))
                    (fn [err data]
                      (cond
                        err
-                       (println "Error receiving message:" err)
+                       (println "Error receiving message:" (.-message err))
 
                        (and (.-Messages data) (pos? (count (.-Messages data))))
                        (let [msg (aget data "Messages" 0)
@@ -27,10 +33,10 @@
                                             :ReceiptHandle (.-ReceiptHandle msg)}]
                          (println "Message body" (.-Body msg))
                          (println "Receipt handle:" (:ReceiptHandle delete-params))
-                         (.deleteMessage q (clj->js delete-params)
+                         (.deleteMessage sqs (clj->js delete-params)
                                          (fn [err data]
                                            (if err
-                                             (println "Delete error:" err)
+                                             (println "Delete error:" (.-message err))
                                              (println "Message deleted")))))
 
                        :default
