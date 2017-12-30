@@ -1,4 +1,5 @@
 (ns ddraw.db)
 
 (def default-db
-  {:authenticated? false})
+  {:authenticated? false
+   :queue-created? false})

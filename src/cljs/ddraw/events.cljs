@@ -16,7 +16,8 @@
  (fn [db _]
    (assoc db
           :sqs (sqs/init!)
-          :sns (sns/init!))))
+          :sns (sns/init!)
+          :authenticated? true)))
 
 (rf/reg-event-db
  ::login!
@@ -39,7 +40,9 @@
  (fn [{:keys [sqs] :as db} [_ q]]
    (println "Queue" q "created")
    (sqs/get-arn sqs q #(rf/dispatch-sync [::queue-arn-read %]))
-   (assoc db :sqs-q q)))
+   (assoc db
+          :sqs-q q
+          :queue-created? true)))
 
 (rf/reg-event-db
  ::queue-arn-read

@@ -7,9 +7,13 @@
   (reset! atom (-> element .-target .-value)))
 
 (defn main-panel []
-  (let [authenticated? (rf/subscribe [::subs/authenticated?])]
+  (let [authenticated? (rf/subscribe [::subs/authenticated?])
+        queue-created? (rf/subscribe [::subs/queue-created?])]
     (if @authenticated?
-      [:div "Ready to roll!"]
+      (do
+        (when-not @queue-created?
+          (rf/dispatch [::events/create-queue!]))
+        [:div "Ready to roll!"])
       (let [username (atom nil)
             password (atom nil)]
         [:div
