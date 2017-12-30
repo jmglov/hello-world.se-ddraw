@@ -27,28 +27,30 @@
                            (println "Error getting queue ARN:" (.-message err))
                            (arn-fn (-> data .-Attributes .-QueueArn))))))
 
-(defn receive [sqs queue-url]
-  (println "Receiving message...")
-  (.receiveMessage sqs (clj->js (assoc receive-params :QueueUrl queue-url))
-                   (fn [err data]
-                     (cond
-                       err
-                       (println "Error receiving message:" (.-message err))
+(defn receive
+  ([sqs queue-url message-fn]
+   (receive sqs queue-url message-fn #(println "Error receiving message:" (.-message %))))
+  ([sqs queue-url message-fn err-fn]
+   (println "Receiving message...")
+   (.receiveMessage sqs (clj->js (assoc receive-params :QueueUrl queue-url))
+                    (fn [err data]
+                      (cond
+                        err
+                        (err-fn err)
 
-                       (and (.-Messages data) (pos? (count (.-Messages data))))
-                       (let [msg (aget data "Messages" 0)
-                             delete-params {:QueueUrl queue-url
-                                            :ReceiptHandle (.-ReceiptHandle msg)}]
-                         (println "Message body" (.-Body msg))
-                         (println "Receipt handle:" (:ReceiptHandle delete-params))
-                         (.deleteMessage sqs (clj->js delete-params)
-                                         (fn [err data]
-                                           (if err
-                                             (println "Delete error:" (.-message err))
-                                             (println "Message deleted")))))
+                        (and (.-Messages data) (pos? (count (.-Messages data))))
+                        (let [msg (aget data "Messages" 0)
+                              delete-params {:QueueUrl queue-url
+                                             :ReceiptHandle (.-ReceiptHandle msg)}]
+                          (message-fn (.-Body msg))
+                          (.deleteMessage sqs (clj->js delete-params)
+                                          (fn [err data]
+                                            (if err
+                                              (println "Delete error:" (.-message err))
+                                              (println "Message deleted")))))
 
-                       :default
-                       (println "No message received")))))
+                        :default
+                        (println "No message received"))))))
 
 (defn set-policy [sqs queue-url policy]
   (let [policy {:Version "2012-10-17"

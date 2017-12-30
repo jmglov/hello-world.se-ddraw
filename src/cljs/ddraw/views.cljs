@@ -1,5 +1,6 @@
 (ns ddraw.views
-  (:require [ddraw.events :as events]
+  (:require [cljs.tools.reader :refer [read-string]]
+            [ddraw.events :as events]
             [ddraw.subs :as subs]
             [re-frame.core :as rf]))
 
@@ -8,12 +9,24 @@
 
 (defn main-panel []
   (let [authenticated? (rf/subscribe [::subs/authenticated?])
-        queue-created? (rf/subscribe [::subs/queue-created?])]
+        queue-created? (rf/subscribe [::subs/queue-created?])
+        latest-id (rf/subscribe [::subs/latest-id])]
     (if @authenticated?
       (do
-        (when-not @queue-created?
-          (rf/dispatch [::events/create-queue!]))
-        [:div "Ready to roll!"])
+        (if @queue-created?
+          [:div
+           (str "Latest ID: " @latest-id)
+           [:button {:on-click #(rf/dispatch-sync [::events/receive-message
+                                                   (fn [msg]
+                                                     (when-let [{:keys [id]} (->> msg
+                                                                                  (.parse js/JSON)
+                                                                                  .-Message
+                                                                                  read-string)]
+                                                       (rf/dispatch-sync [::events/set-id id])))])}
+            "Process queue"]]
+          (do
+            (rf/dispatch [::events/create-queue!])
+            [:div "Creating queue"])))
       (let [username (atom nil)
             password (atom nil)]
         [:div

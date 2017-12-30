@@ -1,5 +1,7 @@
 (ns ddraw.events
-  (:require [ddraw.cognito :as cognito]
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require [cljs.core.async :refer [put! chan <! >! timeout close!]]
+            [ddraw.cognito :as cognito]
             [ddraw.config :as config]
             [ddraw.db :as db]
             [ddraw.sns :as sns]
@@ -56,6 +58,20 @@
 
 (rf/reg-event-db
  ::receive-message
- (fn [{:keys [sqs sqs-q] :as db} _]
-   (sqs/receive sqs sqs-q)
+ (fn [{:keys [sqs sqs-q] :as db} [_ message-fn]]
+   (sqs/receive sqs sqs-q
+                message-fn
+                (fn [err]
+                  (when (= "CredentialsError" (.-code err))
+                    (rf/dispatch-sync [::reauth-required]))))
    db))
+
+(rf/reg-event-db
+ ::reauth-required
+ (fn [db _]
+   (assoc db :authenticated? false)))
+
+(rf/reg-event-db
+ ::set-id
+ (fn [db [_ id]]
+   (assoc db :latest-id id)))

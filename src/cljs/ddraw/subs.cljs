@@ -3,3 +3,5 @@
 
 (rf/reg-sub ::authenticated? :authenticated?)
 (rf/reg-sub ::queue-created? :queue-created?)
+
+(rf/reg-sub ::latest-id :latest-id)
