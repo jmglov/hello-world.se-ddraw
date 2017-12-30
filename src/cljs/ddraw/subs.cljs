@@ -5,4 +5,4 @@
 (rf/reg-sub ::listening? :listening?)
 (rf/reg-sub ::queue-created? :queue-created?)
 
-(rf/reg-sub ::latest-id :latest-id)
+(rf/reg-sub ::shapes :shapes)

@@ -75,9 +75,10 @@
    (assoc db :authenticated? false)))
 
 (rf/reg-event-db
- ::set-id
- (fn [db [_ id]]
-   (assoc db :latest-id id)))
+ ::add-shape
+ (fn [db [_ shape]]
+   (println "Adding shape:" shape)
+   (update db :shapes #(cons shape %))))
 
 (rf/reg-event-db
  ::start-listening
@@ -87,11 +88,11 @@
      (goog.events/listen timer goog.Timer/TICK
                          #(rf/dispatch-sync [::receive-message
                                              (fn [msg]
-                                               (when-let [{:keys [id]} (->> msg
-                                                                            (.parse js/JSON)
-                                                                            .-Message
-                                                                            read-string)]
-                                                 (rf/dispatch-sync [::set-id id])))]))
+                                               (when-let [shape (->> msg
+                                                                     (.parse js/JSON)
+                                                                     .-Message
+                                                                     read-string)]
+                                                 (rf/dispatch-sync [::add-shape shape])))]))
      (assoc db
             :listening? true
             :timer timer))))
