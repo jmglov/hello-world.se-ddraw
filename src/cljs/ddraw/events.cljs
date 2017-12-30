@@ -1,11 +1,14 @@
 (ns ddraw.events
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [put! chan <! >! timeout close!]]
+            [cljs.tools.reader :refer [read-string]]
             [ddraw.cognito :as cognito]
             [ddraw.config :as config]
             [ddraw.db :as db]
             [ddraw.sns :as sns]
             [ddraw.sqs :as sqs]
+            [goog.events]
+            [goog.Timer]
             [re-frame.core :as rf]))
 
 (rf/reg-event-db
@@ -75,3 +78,28 @@
  ::set-id
  (fn [db [_ id]]
    (assoc db :latest-id id)))
+
+(rf/reg-event-db
+ ::start-listening
+ (fn [db _]
+   (let [timer (goog.Timer. 5000)]
+     (.start timer)
+     (goog.events/listen timer goog.Timer/TICK
+                         #(rf/dispatch-sync [::receive-message
+                                             (fn [msg]
+                                               (when-let [{:keys [id]} (->> msg
+                                                                            (.parse js/JSON)
+                                                                            .-Message
+                                                                            read-string)]
+                                                 (rf/dispatch-sync [::set-id id])))]))
+     (assoc db
+            :listening? true
+            :timer timer))))
+
+(rf/reg-event-db
+ ::stop-listening
+ (fn [{:keys [timer] :as db} _]
+   (.stop timer)
+   (assoc db
+          :listening? false
+          :timer nil)))
