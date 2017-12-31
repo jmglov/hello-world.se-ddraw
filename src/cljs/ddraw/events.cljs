@@ -11,6 +11,11 @@
             [goog.Timer]
             [re-frame.core :as rf]))
 
+(defn get-id []
+  (when-not (.getItem js/window.localStorage "id")
+    (.setItem js/window.localStorage "id" (random-uuid)))
+  (.getItem js/window.localStorage "id"))
+
 (defn handle-message [msg]
   (if-let [msg (->> msg
                     (.parse js/JSON)
@@ -48,9 +53,10 @@
 (rf/reg-event-db
  ::create-queue!
  (fn [{:keys [sqs] :as db} _]
-   (sqs/create sqs (str "ddraw-client-" (random-uuid))
-               #(rf/dispatch-sync [::queue-created %]))
-   db))
+   (let [id (get-id)]
+     (sqs/create sqs (str "ddraw-client-" id)
+                 #(rf/dispatch-sync [::queue-created %]))
+     (assoc db :id id))))
 
 (rf/reg-event-db
  ::queue-created
