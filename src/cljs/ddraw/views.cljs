@@ -42,21 +42,23 @@
            [:div
             [:div
              (if @listening?
-               [:button {:on-click #(rf/dispatch-sync [::events/stop-listening])}
+               [:button {:on-click #(rf/dispatch [::events/stop-listening])}
                 "Stop processing queue"]
-               [:button {:on-click #(rf/dispatch-sync [::events/start-listening])}
+               [:button {:on-click #(rf/dispatch [::events/start-listening])}
                 "Start processing queue"])
 
-             [:button {:on-click #(rf/dispatch-sync [::events/publish-shape :clear])}
+             [:button {:on-click #(do
+                                    (rf/dispatch [::events/clear-shapes])
+                                    (rf/dispatch [::events/publish-shape :clear]))}
               "Clear shapes"]]
             [:div
-             [:button {:on-click #(rf/dispatch-sync [::events/new-shape :rectangle])}
+             [:button {:on-click #(rf/dispatch [::events/input-shape :rectangle])}
               "Rectangle"]
-             [:button {:on-click #(rf/dispatch-sync [::events/new-shape :circle])}
+             [:button {:on-click #(rf/dispatch [::events/input-shape :circle])}
               "Circle"]
-             [:button {:on-click #(rf/dispatch-sync [::events/new-shape :triangle])}
+             [:button {:on-click #(rf/dispatch [::events/input-shape :triangle])}
               "Triangle"]
-             [:button {:on-click #(rf/dispatch-sync [::events/new-shape :text])}
+             [:button {:on-click #(rf/dispatch [::events/input-shape :text])}
               "Text"]]
             (when @shape-input
               (case @shape-input
@@ -72,7 +74,9 @@
                               "height" (num-input height)
                               "color" (color-picker color)
                               [:button {:on-click #(let [shape (shapes/rectangle [@x @y] @width @height (keyword @color))]
-                                                     (rf/dispatch-sync [::events/publish-shape shape]))} "Add"]])
+                                                     (rf/dispatch [::events/input-shape nil])
+                                                     (rf/dispatch [::events/add-shape shape])
+                                                     (rf/dispatch [::events/publish-shape shape]))} "Add"]])
                 :circle [:div "Circle inputs"]
                 :triangle [:div "Triangle inputs"]
                 :text [:div "Text inputs"]))]
@@ -88,5 +92,5 @@
                               :on-change #(reset-to-element-value password %)}]
          [:button {:on-click #(do
                                 (println "Logging in as" @username "/" @password)
-                                (rf/dispatch-sync [::events/login! @username @password]))}
+                                (rf/dispatch [::events/login! @username @password]))}
           "Login"]]))))

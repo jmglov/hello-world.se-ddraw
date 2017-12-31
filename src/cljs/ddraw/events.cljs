@@ -16,17 +16,20 @@
     (.setItem js/window.localStorage "id" (random-uuid)))
   (.getItem js/window.localStorage "id"))
 
-(defn handle-message [msg]
-  (if-let [msg (->> msg
-                    (.parse js/JSON)
-                    .-Message
-                    read-string)]
-    (do
-      (println "Received message:" msg)
-      (if (= :clear msg)
-        (rf/dispatch-sync [::clear-shapes])
-        (rf/dispatch-sync [::add-shape msg])))
-    (println "Error: invalid message:" msg)))
+(defn handle-message [my-id msg]
+  (let [{:keys [command id]} (->> msg
+                                     (.parse js/JSON)
+                                     .-Message
+                                     read-string)]
+    (if (nil? command)
+      (println "Error: invalid message:" msg)
+      (do
+        (println "Received message:" msg)
+        (if (= id my-id)
+          (println "Skipping command from myself")
+          (if (= :clear command)
+            (rf/dispatch-sync [::clear-shapes])
+            (rf/dispatch-sync [::add-shape command])))))))
 
 (rf/reg-event-db
  ::initialize-db
@@ -104,23 +107,24 @@
    (assoc db :shapes [])))
 
 (rf/reg-event-db
- ::new-shape
+ ::input-shape
  (fn [db [_ shape]]
    (assoc db :shape-input shape)))
 
 (rf/reg-event-db
  ::publish-shape
- (fn [{:keys [sns] :as db} [_ shape]]
-   (sns/publish sns config/sns-topic (pr-str shape) (fn [& _] (println "Published shape:" shape)))
+ (fn [{:keys [sns id] :as db} [_ shape]]
+   (let [msg (pr-str {:id id, :command shape})]
+     (sns/publish sns config/sns-topic msg (fn [& _] (println "Published:" msg))))
    db))
 
 (rf/reg-event-db
  ::start-listening
- (fn [db _]
+ (fn [{:keys [id] :as db} _]
    (let [timer (goog.Timer. 5000)]
      (.start timer)
      (goog.events/listen timer goog.Timer/TICK
-                         #(rf/dispatch-sync [::receive-message handle-message]))
+                         #(rf/dispatch-sync [::receive-message (partial handle-message id)]))
      (assoc db
             :listening? true
             :timer timer))))
