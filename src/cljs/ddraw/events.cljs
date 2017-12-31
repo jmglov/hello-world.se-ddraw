@@ -71,7 +71,7 @@
  ::queue-arn-read
  (fn [{:keys [sns sqs sqs-q] :as db} [_ q-arn]]
    (sns/subscribe! sns config/sns-topic q-arn
-                   #(println "Queue" sqs-q "subscribed to topic" config/sns-topic))
+                   (fn [& _] (println "Queue" sqs-q "subscribed to topic" config/sns-topic)))
    (sqs/set-policy sqs sqs-q (-> config/sqs-policy
                                  (assoc "Resource" q-arn)
                                  (assoc-in ["Condition" "ArnEquals" "aws:SourceArn"] config/sns-topic)))
@@ -111,7 +111,7 @@
 (rf/reg-event-db
  ::publish-shape
  (fn [{:keys [sns] :as db} [_ shape]]
-   (sns/publish sns config/sns-topic (pr-str shape) #(println "Published shape:" shape))
+   (sns/publish sns config/sns-topic (pr-str shape) (fn [& _] (println "Published shape:" shape)))
    db))
 
 (rf/reg-event-db
