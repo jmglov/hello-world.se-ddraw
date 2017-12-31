@@ -1,11 +1,27 @@
 (ns ddraw.views
-  (:require [ddraw.events :as events]
+  (:require [cljs.tools.reader :refer [read-string]]
+            [ddraw.colors :as colors]
+            [ddraw.events :as events]
             [ddraw.shapes :as shapes]
             [ddraw.subs :as subs]
             [re-frame.core :as rf]))
 
-(defn reset-to-element-value [atom element]
-  (reset! atom (-> element .-target .-value)))
+(defn reset-to-element-value
+  ([atom element]
+   (reset-to-element-value atom element identity))
+  ([atom element f]
+   (reset! atom (f (-> element .-target .-value)))))
+
+(defn color-picker [color-atom]
+  [:select
+   {:value @color-atom
+    :on-change #(reset-to-element-value color-atom %)}
+   (map (fn [c] [:option {:key c} (name c)]) (keys colors/color))])
+
+(defn num-input [num-atom]
+  [:input {:type "text"
+           :size 1
+           :on-change #(reset-to-element-value num-atom % read-string)}])
 
 (defn main-panel []
   (let [authenticated? (rf/subscribe [::subs/authenticated?])
@@ -31,7 +47,7 @@
                [:button {:on-click #(rf/dispatch-sync [::events/start-listening])}
                 "Start processing queue"])
 
-             [:button {:on-click #(rf/dispatch-sync [::events/clear-shapes])}
+             [:button {:on-click #(rf/dispatch-sync [::events/publish-shape :clear])}
               "Clear shapes"]]
             [:div
              [:button {:on-click #(rf/dispatch-sync [::events/new-shape :rectangle])}
@@ -44,7 +60,19 @@
               "Text"]]
             (when @shape-input
               (case @shape-input
-                :rectangle [:div "Rectangle inputs"]
+                :rectangle (let [x (atom nil)
+                                 y (atom nil)
+                                 width (atom nil)
+                                 height (atom nil)
+                                 color (atom (first (keys colors/color)))]
+                             [:div
+                              "x" (num-input x)
+                              "y" (num-input y)
+                              "width" (num-input width)
+                              "height" (num-input height)
+                              "color" (color-picker color)
+                              [:button {:on-click #(let [shape (shapes/rectangle [@x @y] @width @height (keyword @color))]
+                                                     (rf/dispatch-sync [::events/publish-shape shape]))} "Add"]])
                 :circle [:div "Circle inputs"]
                 :triangle [:div "Triangle inputs"]
                 :text [:div "Text inputs"]))]

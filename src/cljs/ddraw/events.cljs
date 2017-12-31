@@ -11,6 +11,18 @@
             [goog.Timer]
             [re-frame.core :as rf]))
 
+(defn handle-message [msg]
+  (if-let [msg (->> msg
+                    (.parse js/JSON)
+                    .-Message
+                    read-string)]
+    (do
+      (println "Received message:" msg)
+      (if (= :clear msg)
+        (rf/dispatch-sync [::clear-shapes])
+        (rf/dispatch-sync [::add-shape msg])))
+    (println "Error: invalid message:" msg)))
+
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
@@ -91,18 +103,18 @@
    (assoc db :shape-input shape)))
 
 (rf/reg-event-db
+ ::publish-shape
+ (fn [{:keys [sns] :as db} [_ shape]]
+   (sns/publish sns config/sns-topic (pr-str shape) #(println "Published shape:" shape))
+   db))
+
+(rf/reg-event-db
  ::start-listening
  (fn [db _]
    (let [timer (goog.Timer. 5000)]
      (.start timer)
      (goog.events/listen timer goog.Timer/TICK
-                         #(rf/dispatch-sync [::receive-message
-                                             (fn [msg]
-                                               (when-let [shape (->> msg
-                                                                     (.parse js/JSON)
-                                                                     .-Message
-                                                                     read-string)]
-                                                 (rf/dispatch-sync [::add-shape shape])))]))
+                         #(rf/dispatch-sync [::receive-message handle-message]))
      (assoc db
             :listening? true
             :timer timer))))
