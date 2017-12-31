@@ -78,7 +78,12 @@
  ::add-shape
  (fn [db [_ shape]]
    (println "Adding shape:" shape)
-   (update db :shapes #(cons shape %))))
+   (update db :shapes conj shape)))
+
+(rf/reg-event-db
+ ::clear-shapes
+ (fn [db _]
+   (assoc db :shapes [])))
 
 (rf/reg-event-db
  ::start-listening

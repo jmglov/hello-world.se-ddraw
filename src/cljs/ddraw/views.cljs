@@ -1,5 +1,6 @@
 (ns ddraw.views
   (:require [ddraw.events :as events]
+            [ddraw.shapes :as shapes]
             [ddraw.subs :as subs]
             [re-frame.core :as rf]))
 
@@ -16,12 +17,8 @@
         [:div
          [:svg {:width 640
                 :height 480}
-          [:rect {:style {:stroke-width 0}
-                  :x 0, :y 0
-                  :width 640, :height 480
-                  :fill "#bbbbbb"}]
+          (shapes/rectangle 0 0 640 480 :light-gray)
           (->> @shapes
-               reverse
                (map-indexed (fn [i [shape attrs]]
                               [shape (assoc attrs :key i)])))]
          (if @queue-created?
@@ -30,7 +27,9 @@
               [:button {:on-click #(rf/dispatch-sync [::events/stop-listening])}
                "Stop processing queue"]
               [:button {:on-click #(rf/dispatch-sync [::events/start-listening])}
-               "Start processing queue"])]
+               "Start processing queue"])
+            [:button {:on-click #(rf/dispatch-sync [::events/clear-shapes])}
+             "Clear shapes"]]
            (do
              (rf/dispatch [::events/create-queue!])
              [:div "Creating queue"]))])
