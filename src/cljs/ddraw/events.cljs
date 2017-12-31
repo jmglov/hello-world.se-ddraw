@@ -86,6 +86,11 @@
    (assoc db :shapes [])))
 
 (rf/reg-event-db
+ ::new-shape
+ (fn [db [_ shape]]
+   (assoc db :shape-input shape)))
+
+(rf/reg-event-db
  ::start-listening
  (fn [db _]
    (let [timer (goog.Timer. 5000)]

@@ -4,4 +4,5 @@
   {:authenticated? false
    :listening? false
    :queue-created? false
-   :shapes []})
+   :shapes []
+   :shape-input nil})
