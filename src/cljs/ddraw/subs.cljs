@@ -6,4 +6,4 @@
 (rf/reg-sub ::queue-created? :queue-created?)
 
 (rf/reg-sub ::shapes :shapes)
-(rf/reg-sub ::shape-input :shape-input)
+(rf/reg-sub ::current-shape :current-shape)

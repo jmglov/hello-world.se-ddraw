@@ -108,13 +108,26 @@
 
 (rf/reg-event-db
  ::input-shape
- (fn [db [_ shape]]
-   (assoc db :shape-input shape)))
+ (fn [db [_ type]]
+   (let [shape (merge {:type type, :color "black"}
+                      (case type
+                        :circle {:x 0, :y 0, :radius 0}
+                        :rectangle {:x 0, :y 0, :width 0, :height 0}
+                        :text {:x 0, :y 0, :size 14, :text ""}
+                        :triangle {:x1 0, :y1 0, :x2 0, :y2 0, :x3 0, :y3 0}
+                        nil))]
+     (println "Setting current shape:" shape)
+     (assoc db :current-shape shape))))
 
 (rf/reg-event-db
- ::publish-shape
- (fn [{:keys [sns id] :as db} [_ shape]]
-   (let [msg (pr-str {:id id, :command shape})]
+ ::assoc-shape
+ (fn [db [_ k v]]
+   (assoc-in db [:current-shape k] v)))
+
+(rf/reg-event-db
+ ::publish-command
+ (fn [{:keys [sns id] :as db} [_ command]]
+   (let [msg (pr-str {:id id, :command command})]
      (sns/publish sns config/sns-topic msg (fn [& _] (println "Published:" msg))))
    db))
 

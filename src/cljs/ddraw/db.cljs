@@ -4,5 +4,5 @@
   {:authenticated? false
    :listening? false
    :queue-created? false
-   :shapes []
-   :shape-input nil})
+   :current-shape nil
+   :shapes []})

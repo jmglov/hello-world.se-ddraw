@@ -1,18 +1,13 @@
 (ns ddraw.widgets
   (:require [cljs.tools.reader :refer [read-string]]
+            [ddraw.events :as events]
             [ddraw.shapes :as shapes]
+            [ddraw.subs :as subs]
+            [re-frame.core :as rf]
             [reagent.core :as r]))
 
-(defn reset-to-element-value
-  ([atom element]
-   (reset-to-element-value atom element identity))
-  ([atom element f]
-   (println "Resetting" atom "to value:" (f (-> element .-target .-value)))
-   (reset! atom (f (-> element .-target .-value)))))
-
-(defn reset-seq! [v atoms]
-  (doseq [a atoms]
-    (reset! a v)))
+(defn get-value [element]
+  (-> element .-target .-value))
 
 (def colors
   ["aquamarine"
@@ -167,37 +162,36 @@
 (defn button [on-click-fn label]
   [:button {:on-click on-click-fn} label])
 
-(defn color-picker [color-atom]
-  (reset! color-atom (first colors))
+(defn color-picker []
   [:select
-   {:on-change #(reset-to-element-value color-atom %)}
+   {:on-change #(rf/dispatch [::events/assoc-shape :color (get-value %)])}
    (map (fn [c] [:option {:key c} c]) colors)])
 
-(defn num-input [num-atom]
+(defn num-input [k]
   [:input {:type "text"
            :placeholder "0"
            :size 1
-           :on-change #(reset-to-element-value num-atom % read-string)}])
+           :on-change #(rf/dispatch [::events/assoc-shape k (read-string (get-value %))])}])
 
-(defn input [type atom]
-  [:input {:type (keyword type)
-           :on-change #(reset-to-element-value atom %)}])
-
-(defn rectangle-input [on-add-fn]
-  (let [x (r/atom 0)
-        y (r/atom 0)
-        width (r/atom 0)
-        height (r/atom 0)
-        color (r/atom (first colors))]
+(defn login-form []
+  (let [username (r/atom nil)
+        password (r/atom nil)]
     [:div
-     "x" (num-input x)
-     "y" (num-input y)
-     "width" (num-input width)
-     "height" (num-input height)
-     "color" (color-picker color)
-     (button #(do
-                (println [@x @y] @width @height @color)
-                (let [shape (shapes/rectangle [@x @y] @width @height @color)]
-                  (on-add-fn shape)
-                  #_(reset-seq! nil [x y width height color])))
+     "Username:" [:input {:type "text", :on-change #(reset! username (get-value %))}]
+     "Password:" [:input {:type "password", :on-change #(reset! password (get-value %))}]
+     (button #(rf/dispatch [::events/login! @username @password]) "Login")]))
+
+(defn rectangle-input []
+  (let [shape (rf/subscribe [::subs/current-shape])]
+    [:div
+     "x" [num-input :x]
+     "y" [num-input :y]
+     "width" [num-input :width]
+     "height" [num-input :height]
+     "color" [color-picker]
+     (button #(let [{:keys [x y width height color]} @shape]
+                (let [shape (shapes/rectangle [x y] width height color)]
+                  (rf/dispatch [::events/add-shape shape])
+                  (rf/dispatch [::events/publish-command shape])
+                  (rf/dispatch [::events/input-shape nil])))
              "Add")]))

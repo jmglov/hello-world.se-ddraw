@@ -11,7 +11,7 @@
         listening? (rf/subscribe [::subs/listening?])
         queue-created? (rf/subscribe [::subs/queue-created?])
         shapes (rf/subscribe [::subs/shapes])
-        shape-input (rf/subscribe [::subs/shape-input])]
+        current-shape (rf/subscribe [::subs/current-shape])]
     (if @authenticated?
       (do
         [:div
@@ -25,32 +25,24 @@
            [:div
             [:div
              (if @listening?
-               (widgets/button #(rf/dispatch [::events/stop-listening]) "Stop processing queue")
-               (widgets/button #(rf/dispatch [::events/start-listening]) "Start processing queue"))
-             (widgets/button #(do
+               [widgets/button #(rf/dispatch [::events/stop-listening]) "Stop processing queue"]
+               [widgets/button #(rf/dispatch [::events/start-listening]) "Start processing queue"])
+             [widgets/button #(do
                                 (rf/dispatch [::events/clear-shapes])
-                                (rf/dispatch [::events/publish-shape :clear]))
-                             "Clear shapes")]
+                                (rf/dispatch [::events/publish-command :clear]))
+              "Clear shapes"]]
             [:div
-             (widgets/button #(rf/dispatch [::events/input-shape :rectangle]) "Rectangle")
-             (widgets/button #(rf/dispatch [::events/input-shape :circle]) "Circle")
-             (widgets/button #(rf/dispatch [::events/input-shape :triangle]) "Triangle")
-             (widgets/button #(rf/dispatch [::events/input-shape :text]) "Text")]
-            (when @shape-input
-              (case @shape-input
-                :rectangle (widgets/rectangle-input (fn [shape]
-                                                      (rf/dispatch [::events/input-shape nil])
-                                                      (rf/dispatch [::events/add-shape shape])
-                                                      (rf/dispatch [::events/publish-shape shape])))
-                :circle [:div "Circle inputs"]
-                :triangle [:div "Triangle inputs"]
-                :text [:div "Text inputs"]))]
+             [widgets/button #(rf/dispatch [::events/input-shape :rectangle]) "Rectangle"]
+             [widgets/button #(rf/dispatch [::events/input-shape :circle]) "Circle"]
+             [widgets/button #(rf/dispatch [::events/input-shape :triangle]) "Triangle"]
+             [widgets/button #(rf/dispatch [::events/input-shape :text]) "Text"]]
+            (case (:type @current-shape)
+              :rectangle [widgets/rectangle-input]
+              :circle [:div "Circle inputs"]
+              :triangle [:div "Triangle inputs"]
+              :text [:div "Text inputs"]
+              nil)]
            (do
              (rf/dispatch [::events/create-queue!])
              [:div "Creating queue"]))])
-      (let [username (r/atom nil)
-            password (r/atom nil)]
-        [:div
-         "Username:" (widgets/input :text username)
-         "Password:" (widgets/input :password password)
-         (widgets/button #(rf/dispatch [::events/login! @username @password]) "Login")]))))
+      [widgets/login-form])))
