@@ -168,9 +168,9 @@
   [:button {:on-click on-click-fn} label])
 
 (defn color-picker [color-atom]
+  (reset! color-atom (first colors))
   [:select
-   {:value @color-atom
-    :on-change #(reset-to-element-value color-atom %)}
+   {:on-change #(reset-to-element-value color-atom %)}
    (map (fn [c] [:option {:key c} c]) colors)])
 
 (defn num-input [num-atom]
