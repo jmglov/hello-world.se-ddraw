@@ -175,6 +175,7 @@
 
 (defn num-input [num-atom]
   [:input {:type "text"
+           :placeholder "0"
            :size 1
            :on-change #(reset-to-element-value num-atom % read-string)}])
 
