@@ -19,8 +19,8 @@
                 :height 480}
           (shapes/rectangle [0 0] 640 480 "lightgray")
           (->> @shapes
-               (map-indexed (fn [i [shape attrs]]
-                              [shape (assoc attrs :key i)])))]
+               (map-indexed (fn [i [shape attrs & body]]
+                              (vec (concat [shape (assoc attrs :key i)] body)))))]
          (if @queue-created?
            [:div
             [:div
@@ -37,10 +37,10 @@
              [widgets/button #(rf/dispatch [::events/input-shape :triangle]) "Triangle"]
              [widgets/button #(rf/dispatch [::events/input-shape :text]) "Text"]]
             (case (:type @current-shape)
+              :circle [widgets/circle-input]
               :rectangle [widgets/rectangle-input]
-              :circle [:div "Circle inputs"]
-              :triangle [:div "Triangle inputs"]
-              :text [:div "Text inputs"]
+              :triangle [widgets/triangle-input]
+              :text [widgets/text-input]
               nil)]
            (do
              (rf/dispatch [::events/create-queue!])

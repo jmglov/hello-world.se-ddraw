@@ -181,6 +181,20 @@
      "Password:" [:input {:type "password", :on-change #(reset! password (get-value %))}]
      (button #(rf/dispatch [::events/login! @username @password]) "Login")]))
 
+(defn circle-input []
+  (let [shape (rf/subscribe [::subs/current-shape])]
+    [:div
+     "x" [num-input :x]
+     "y" [num-input :y]
+     "radius" [num-input :radius]
+     "color" [color-picker]
+     (button #(let [{:keys [x y radius color]} @shape]
+                (let [shape (shapes/circle [x y] radius color)]
+                  (rf/dispatch [::events/add-shape shape])
+                  (rf/dispatch [::events/publish-command shape])
+                  (rf/dispatch [::events/input-shape nil])))
+             "Add")]))
+
 (defn rectangle-input []
   (let [shape (rf/subscribe [::subs/current-shape])]
     [:div
@@ -191,6 +205,39 @@
      "color" [color-picker]
      (button #(let [{:keys [x y width height color]} @shape]
                 (let [shape (shapes/rectangle [x y] width height color)]
+                  (rf/dispatch [::events/add-shape shape])
+                  (rf/dispatch [::events/publish-command shape])
+                  (rf/dispatch [::events/input-shape nil])))
+             "Add")]))
+
+(defn triangle-input []
+  (let [shape (rf/subscribe [::subs/current-shape])]
+    [:div
+     "x1" [num-input :x1]
+     "y1" [num-input :y1]
+     "x2" [num-input :x2]
+     "y2" [num-input :y2]
+     "x3" [num-input :x3]
+     "y3" [num-input :y3]
+     "color" [color-picker]
+     (button #(let [{:keys [x1 y1 x2 y2 x3 y3 color]} @shape]
+                (let [shape (shapes/triangle [x1 y1] [x2 y2] [x3 y3] color)]
+                  (rf/dispatch [::events/add-shape shape])
+                  (rf/dispatch [::events/publish-command shape])
+                  (rf/dispatch [::events/input-shape nil])))
+             "Add")]))
+
+(defn text-input []
+  (let [shape (rf/subscribe [::subs/current-shape])]
+    [:div
+     "x" [num-input :x]
+     "y" [num-input :y]
+     "size" [num-input :size]
+     "text" [:input {:type "text"
+                     :on-change #(rf/dispatch [::events/assoc-shape :text (get-value %)])}]
+     "color" [color-picker]
+     (button #(let [{:keys [x y size color text]} @shape]
+                (let [shape (shapes/text [x y] size color text)]
                   (rf/dispatch [::events/add-shape shape])
                   (rf/dispatch [::events/publish-command shape])
                   (rf/dispatch [::events/input-shape nil])))
