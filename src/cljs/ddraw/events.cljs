@@ -16,6 +16,11 @@
     (.setItem js/window.localStorage "id" (random-uuid)))
   (.getItem js/window.localStorage "id"))
 
+(declare handle-message)
+
+(defn receive-message [id]
+  (rf/dispatch [::receive-message (partial handle-message id)]))
+
 (defn handle-message [my-id msg]
   (let [{:keys [command id]} (->> msg
                                      (.parse js/JSON)
@@ -29,7 +34,8 @@
           (println "Skipping command from myself")
           (if (= :clear command)
             (rf/dispatch-sync [::clear-shapes])
-            (rf/dispatch-sync [::add-shape command])))))))
+            (rf/dispatch-sync [::add-shape command])))))
+    (receive-message my-id)))
 
 (rf/reg-event-db
  ::initialize-db
@@ -135,9 +141,9 @@
  ::start-listening
  (fn [{:keys [id] :as db} _]
    (let [timer (goog.Timer. 5000)]
+     (receive-message id)
      (.start timer)
-     (goog.events/listen timer goog.Timer/TICK
-                         #(rf/dispatch-sync [::receive-message (partial handle-message id)]))
+     (goog.events/listen timer goog.Timer/TICK #(receive-message id))
      (assoc db
             :listening? true
             :timer timer))))
