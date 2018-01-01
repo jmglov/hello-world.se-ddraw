@@ -8,13 +8,18 @@
             [ddraw.sns :as sns]
             [ddraw.sqs :as sqs]
             [goog.events]
+            [goog.Uri]
             [goog.Timer]
             [re-frame.core :as rf]))
 
+(defn get-id-param []
+  (-> js/document.location.href goog.Uri. (.getParameterValue "id")))
+
 (defn get-id []
   (when-not (.getItem js/window.localStorage "id")
-    (.setItem js/window.localStorage "id" (random-uuid)))
-  (.getItem js/window.localStorage "id"))
+    (.setItem js/window.localStorage "id"
+              (or (get-id-param) (random-uuid))))
+  (or (get-id-param) (.getItem js/window.localStorage "id")))
 
 (declare handle-message)
 
