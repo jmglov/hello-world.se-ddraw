@@ -1,6 +1,5 @@
 (ns ddraw.shapes
-  (:require [clojure.string :as string]
-            [ddraw.colors :as colors]))
+  (:require [clojure.string :as string]))
 
 (defn circle
   ([pt radius color]
@@ -9,7 +8,7 @@
    [:circle {:style {:stroke-width outline-width}
              :cx x, :cy y
              :r radius
-             :fill (colors/->html-color color)}]))
+             :fill color}]))
 
 (defn polygon
   ([points color]
@@ -19,7 +18,7 @@
               :points (->> points
                            (map #(string/join "," %))
                            (string/join " "))
-              :fill (colors/->html-color color)}]))
+              :fill color}]))
 
 (defn rectangle
   ([pt width height color]
@@ -28,12 +27,12 @@
    [:rect {:style {:stroke-width 0}
            :x x, :y y
            :width width, :height height
-           :fill (colors/->html-color color)}]))
+           :fill color}]))
 
 (defn text [[x y] size color text]
   [:text {:x x, :y y
           :font-size size
-          :fill (colors/->html-color color)
+          :fill color
           :text-anchor :middle}
    text])
 

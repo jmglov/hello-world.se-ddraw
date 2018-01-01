@@ -1,27 +1,10 @@
 (ns ddraw.views
-  (:require [cljs.tools.reader :refer [read-string]]
-            [ddraw.colors :as colors]
-            [ddraw.events :as events]
+  (:require [ddraw.events :as events]
             [ddraw.shapes :as shapes]
             [ddraw.subs :as subs]
-            [re-frame.core :as rf]))
-
-(defn reset-to-element-value
-  ([atom element]
-   (reset-to-element-value atom element identity))
-  ([atom element f]
-   (reset! atom (f (-> element .-target .-value)))))
-
-(defn color-picker [color-atom]
-  [:select
-   {:value @color-atom
-    :on-change #(reset-to-element-value color-atom %)}
-   (map (fn [c] [:option {:key c} (name c)]) (keys colors/color))])
-
-(defn num-input [num-atom]
-  [:input {:type "text"
-           :size 1
-           :on-change #(reset-to-element-value num-atom % read-string)}])
+            [ddraw.widgets :as widgets]
+            [re-frame.core :as rf]
+            [reagent.core :as r]))
 
 (defn main-panel []
   (let [authenticated? (rf/subscribe [::subs/authenticated?])
@@ -34,7 +17,7 @@
         [:div
          [:svg {:width 640
                 :height 480}
-          (shapes/rectangle [0 0] 640 480 :light-gray)
+          (shapes/rectangle [0 0] 640 480 "lightgray")
           (->> @shapes
                (map-indexed (fn [i [shape attrs]]
                               [shape (assoc attrs :key i)])))]
@@ -42,55 +25,32 @@
            [:div
             [:div
              (if @listening?
-               [:button {:on-click #(rf/dispatch [::events/stop-listening])}
-                "Stop processing queue"]
-               [:button {:on-click #(rf/dispatch [::events/start-listening])}
-                "Start processing queue"])
-
-             [:button {:on-click #(do
-                                    (rf/dispatch [::events/clear-shapes])
-                                    (rf/dispatch [::events/publish-shape :clear]))}
-              "Clear shapes"]]
+               (widgets/button #(rf/dispatch [::events/stop-listening]) "Stop processing queue")
+               (widgets/button #(rf/dispatch [::events/start-listening]) "Start processing queue"))
+             (widgets/button #(do
+                                (rf/dispatch [::events/clear-shapes])
+                                (rf/dispatch [::events/publish-shape :clear]))
+                             "Clear shapes")]
             [:div
-             [:button {:on-click #(rf/dispatch [::events/input-shape :rectangle])}
-              "Rectangle"]
-             [:button {:on-click #(rf/dispatch [::events/input-shape :circle])}
-              "Circle"]
-             [:button {:on-click #(rf/dispatch [::events/input-shape :triangle])}
-              "Triangle"]
-             [:button {:on-click #(rf/dispatch [::events/input-shape :text])}
-              "Text"]]
+             (widgets/button #(rf/dispatch [::events/input-shape :rectangle]) "Rectangle")
+             (widgets/button #(rf/dispatch [::events/input-shape :circle]) "Circle")
+             (widgets/button #(rf/dispatch [::events/input-shape :triangle]) "Triangle")
+             (widgets/button #(rf/dispatch [::events/input-shape :text]) "Text")]
             (when @shape-input
               (case @shape-input
-                :rectangle (let [x (atom nil)
-                                 y (atom nil)
-                                 width (atom nil)
-                                 height (atom nil)
-                                 color (atom (first (keys colors/color)))]
-                             [:div
-                              "x" (num-input x)
-                              "y" (num-input y)
-                              "width" (num-input width)
-                              "height" (num-input height)
-                              "color" (color-picker color)
-                              [:button {:on-click #(let [shape (shapes/rectangle [@x @y] @width @height (keyword @color))]
-                                                     (rf/dispatch [::events/input-shape nil])
-                                                     (rf/dispatch [::events/add-shape shape])
-                                                     (rf/dispatch [::events/publish-shape shape]))} "Add"]])
+                :rectangle (widgets/rectangle-input (fn [shape]
+                                                      (rf/dispatch [::events/input-shape nil])
+                                                      (rf/dispatch [::events/add-shape shape])
+                                                      (rf/dispatch [::events/publish-shape shape])))
                 :circle [:div "Circle inputs"]
                 :triangle [:div "Triangle inputs"]
                 :text [:div "Text inputs"]))]
            (do
              (rf/dispatch [::events/create-queue!])
              [:div "Creating queue"]))])
-      (let [username (atom nil)
-            password (atom nil)]
+      (let [username (r/atom nil)
+            password (r/atom nil)]
         [:div
-         "Username:" [:input {:type "text"
-                              :on-change #(reset-to-element-value username %)}]
-         "Password:" [:input {:type "password"
-                              :on-change #(reset-to-element-value password %)}]
-         [:button {:on-click #(do
-                                (println "Logging in as" @username "/" @password)
-                                (rf/dispatch [::events/login! @username @password]))}
-          "Login"]]))))
+         "Username:" (widgets/input :text username)
+         "Password:" (widgets/input :password password)
+         (widgets/button #(rf/dispatch [::events/login! @username @password]) "Login")]))))
