@@ -6,6 +6,11 @@
             [re-frame.core :as rf]
             [reagent.core :as r]))
 
+(defn clear-shapes []
+  (rf/dispatch [::events/clear-shapes])
+  (rf/dispatch [::events/publish-command :clear])
+  (rf/dispatch [::events/input-shape nil]))
+
 (defn main-panel []
   (let [authenticated? (rf/subscribe [::subs/authenticated?])
         listening? (rf/subscribe [::subs/listening?])
@@ -18,14 +23,14 @@
                                        nil
                                        shape-type)]))]
     (if @authenticated?
-      (do
+      (let [draw-shapes #(->> @shapes
+                              (map-indexed (fn [i [shape attrs & body]]
+                                             (vec (concat [shape (assoc attrs :key i)] body)))))]
         [:div {:style {:width 640, :display "flex", :flex-direction "column", :justify-content "center"}}
          [:svg {:width 640
                 :height 480}
           (shapes/rectangle [0 0] 640 480 "lightgray")
-          (->> @shapes
-               (map-indexed (fn [i [shape attrs & body]]
-                              (vec (concat [shape (assoc attrs :key i)] body)))))]
+          (draw-shapes)]
          (if @queue-created?
            [:div
             [:div {:style {:display "flex", :margin-top 5}}
@@ -33,12 +38,7 @@
              [widgets/button {:style {:margin-left 5}} #(toggle-input :circle) "Circle"]
              [widgets/button {:style {:margin-left 5}} #(toggle-input :triangle) "Triangle"]
              [widgets/button {:style {:margin-left 5}} #(toggle-input :text) "Text"]
-             [widgets/button {:style {:margin-left "auto"}}
-              #(do
-                 (rf/dispatch [::events/clear-shapes])
-                 (rf/dispatch [::events/publish-command :clear])
-                 (rf/dispatch [::events/input-shape nil]))
-              "Clear shapes"]]
+             [widgets/button {:style {:margin-left "auto"}} clear-shapes "Clear shapes"]]
             (when @current-shape
               [:div {:style {:margin-top 5}}
                (case (:type @current-shape)

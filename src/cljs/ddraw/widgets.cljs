@@ -163,18 +163,16 @@
   ([on-click-fn label]
    (button {} on-click-fn label))
   ([attrs on-click-fn label]
-   [:button (merge attrs {:on-click on-click-fn}) label]))
+   [:span {:style {:background-color "pink"
+                   :margin 5}} (str label " button")]))
 
 (defn color-picker []
-  [:select
-   {:on-change #(rf/dispatch [::events/assoc-shape :color (get-value %)])}
-   (map (fn [c] [:option {:key c} c]) colors)])
+  (let [on-change-fn #(rf/dispatch [::events/assoc-shape :color (get-value %)])]
+    [:span {:style {:background-color "pink"}} "color picker"]))
 
 (defn num-input [k]
-  [:input {:type "text"
-           :placeholder "0"
-           :size 1
-           :on-change #(rf/dispatch [::events/assoc-shape k (read-string (get-value %))])}])
+  (let [on-change-fn #(rf/dispatch [::events/assoc-shape k (read-string (get-value %))])]
+    [:span {:style {:background-color "pink"}} "input"]))
 
 (defn span [style text]
   [:span {:style style} text])
@@ -198,98 +196,30 @@
   (rf/dispatch [::events/input-shape nil]))
 
 (defn circle-input []
-  (let [shape (rf/subscribe [::subs/current-shape])]
+  (let [shape (rf/subscribe [::subs/current-shape])
+        on-click-add-fn #(let [{:keys [x y radius color]} @shape]
+                           (dispatch-shape (shapes/circle [x y] radius color)))]
     [:div {:style {:display "flex"}}
-     [span {:margin-right 5} "x"]
-     [num-input :x]
-
-     [span {:margin-left 5, :margin-right 5} "y"]
-     [num-input :y]
-
-     [span {:margin-left 5, :margin-right 5} "radius"]
-     [num-input :radius]
-
-     [span {:margin-left 5, :margin-right 5} "color"]
-     [color-picker]
-
-     [button {:style {:margin-left "auto"}}
-      #(let [{:keys [x y radius color]} @shape]
-         (dispatch-shape (shapes/circle [x y] radius color)))
-      "Add"]]))
+     [:span {:style {:background-color "pink"}} "circle input"]]))
 
 (defn rectangle-input []
-  (let [shape (rf/subscribe [::subs/current-shape])]
+  (let [shape (rf/subscribe [::subs/current-shape])
+        on-click-add-fn #(let [{:keys [x y width height color]} @shape]
+                           (dispatch-shape (shapes/rectangle [x y] width height color)))]
     [:div {:style {:display "flex"}}
-     [span {:margin-right 5} "x"]
-     [num-input :x]
-
-     [span {:margin-left 5, :margin-right 5} "y"]
-     [num-input :y]
-
-     [span {:margin-left 5, :margin-right 5} "width"]
-     [num-input :width]
-
-     [span {:margin-left 5, :margin-right 5} "height"]
-     [num-input :height]
-
-     [span {:margin-left 5, :margin-right 5} "color"]
-     [color-picker]
-
-     [button {:style {:margin-left "auto"}}
-      #(let [{:keys [x y width height color]} @shape]
-         (dispatch-shape (shapes/rectangle [x y] width height color)))
-      "Add"]]))
+     [:span {:style {:background-color "pink"}} "rectangle input"]]))
 
 (defn triangle-input []
-  (let [shape (rf/subscribe [::subs/current-shape])]
+  (let [shape (rf/subscribe [::subs/current-shape])
+        on-click-add-fn #(let [{:keys [x1 y1 x2 y2 x3 y3 color]} @shape]
+                           (dispatch-shape (shapes/triangle [x1 y1] [x2 y2] [x3 y3] color)))]
     [:div {:style {:display "flex"}}
-     [span {:margin-right 5} "x1"]
-     [num-input :x1]
-
-     [span {:margin-left 5, :margin-right 5} "y1"]
-     [num-input :y1]
-
-     [span {:margin-left 5, :margin-right 5} "x2"]
-     [num-input :x2]
-
-     [span {:margin-left 5, :margin-right 5} "y2"]
-     [num-input :y2]
-
-     [span {:margin-left 5, :margin-right 5} "x3"]
-     [num-input :x3]
-
-     [span {:margin-left 5, :margin-right 5} "y3"]
-     [num-input :y3]
-
-     [span {:margin-left 5, :margin-right 5} "color"]
-     [color-picker]
-
-     [button {:style {:margin-left "auto"}}
-      #(let [{:keys [x1 y1 x2 y2 x3 y3 color]} @shape]
-         (dispatch-shape (shapes/triangle [x1 y1] [x2 y2] [x3 y3] color)))
-      "Add"]]))
+     [:span {:style {:background-color "pink"}} "triangle input"]]))
 
 (defn text-input []
-  (let [shape (rf/subscribe [::subs/current-shape])]
+  (let [shape (rf/subscribe [::subs/current-shape])
+        on-text-change-fn #(rf/dispatch [::events/assoc-shape :text (get-value %)])
+        on-click-add-fn #(let [{:keys [x y size color text]} @shape]
+                           (dispatch-shape (shapes/text [x y] size color text)))]
     [:div {:style {:display "flex"}}
-     [span {:margin-right 5} "x"]
-     [num-input :x]
-
-     [span {:margin-left 5, :margin-right 5} "y"]
-     [num-input :y]
-
-     [span {:margin-left 5, :margin-right 5} "size"]
-     [num-input :size]
-
-     [span {:margin-left 5, :margin-right 5} "text"]
-     [:input {:type "text"
-              :placeholder "Hello, world!"
-              :on-change #(rf/dispatch [::events/assoc-shape :text (get-value %)])}]
-
-     [span {:margin-left 5, :margin-right 5} "color"]
-     [color-picker]
-
-     [button {:style {:margin-left "auto"}}
-      #(let [{:keys [x y size color text]} @shape]
-         (dispatch-shape (shapes/text [x y] size color text)))
-      "Add"]]))
+     [:span {:style {:background-color "pink"}} "text input"]]))
