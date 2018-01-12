@@ -44,7 +44,7 @@
      :source-paths ["src/cljs"]
      :compiler     {:main            ddraw.core
                     :output-to       "resources/public/js/compiled/app.js"
-                    :optimizations   :advanced
+                    :optimizations   :simple
                     :closure-defines {goog.DEBUG false}
                     :pretty-print    false}}
 
