@@ -182,10 +182,24 @@
 (defn login-form []
   (let [username (r/atom nil)
         password (r/atom nil)]
-    [:div
-     "Username:" [:input {:type "text", :on-change #(reset! username (get-value %))}]
-     "Password:" [:input {:type "password", :on-change #(reset! password (get-value %))}]
-     (button #(rf/dispatch [::events/login! @username @password]) "Login")]))
+    [:div {:style {:display "flex"
+                   :flex-direction "column"
+                   :width 250}}
+     [:div {:style {:display "flex"
+                    :width "100%"}}
+      [:span "Username:"]
+      [:input {:style {:margin-left "auto"}
+               :type "text", :on-change #(reset! username (get-value %))}]]
+     [:div {:style {:display "flex"
+                    :width "100%"
+                    :margin-top 5}}
+      [:span "Password:"]
+      [:input {:style {:margin-left "auto"}
+               :type "password", :on-change #(reset! password (get-value %))}]]
+     [:div {:style {:display "flex"
+                    :justify-content "center"
+                    :margin-top 10}}
+      (button #(rf/dispatch [::events/login! @username @password]) "Login")]]))
 
 (defn dispatch-shape [shape]
   (rf/dispatch [::events/add-shape shape])
