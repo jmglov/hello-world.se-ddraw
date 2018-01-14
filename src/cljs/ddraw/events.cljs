@@ -70,6 +70,9 @@
    (let [id (get-id)]
      (sqs/create sqs (str "ddraw-client-" id)
                  #(rf/dispatch-sync [::queue-created %]))
+
+     (rf/dispatch [::queue-created "foo"])  ; <-- delete this once sqs/create is implemented
+
      (assoc db :id id))))
 
 (rf/reg-event-db

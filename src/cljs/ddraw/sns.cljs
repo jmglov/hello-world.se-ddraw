@@ -7,12 +7,15 @@
   (js/AWS.SNS. (clj->js {:apiVersion "2012-11-05"})))
 
 (defn publish [sns sns-topic msg on-publish-fn]
-  (.publish sns (clj->js {:TopicArn sns-topic
-                          :Message msg})
-            (aws/response-handler on-publish-fn)))
+  (println "Publishing message to SNS topic" sns-topic ":" msg)
+
+  ;; Do stuff here
+
+  )
 
 (defn subscribe! [sns sns-topic queue-arn on-subscribed-fn]
-  (.subscribe sns (clj->js {:Protocol "sqs"
-                            :TopicArn sns-topic
-                            :Endpoint queue-arn})
-              (aws/response-handler on-subscribed-fn)))
+  (println "Subscribing queue" queue-arn "to SNS topic" sns-topic)
+
+  ;; Do stuff here
+
+  )
