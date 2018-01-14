@@ -173,7 +173,7 @@
 (defn num-input [k]
   [:input {:type "text"
            :placeholder "0"
-           :size 1
+           :size 3
            :on-change #(rf/dispatch [::events/assoc-shape k (read-string (get-value %))])}])
 
 (defn span [style text]
