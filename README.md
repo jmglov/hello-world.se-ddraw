@@ -1,8 +1,25 @@
 # ddraw
 
-A [re-frame](https://github.com/Day8/re-frame) application designed to ... well, that part is up to you.
+A [re-frame](https://github.com/Day8/re-frame) distributed drawing application.
+
+## AWS Documentation
+
+* [Amazon Cognito Identity SDK for JavaScript](https://github.com/aws/amazon-cognito-identity-js#usage)
+* [AWS JavaScript SDK - SNS](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SNS.html)
+* [AWS JavaScript SDK - SQS](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/SQS.html)
 
 ## Development Mode
+
+### Run application:
+
+```
+lein clean
+lein figwheel dev
+```
+
+Figwheel will automatically push cljs changes to the browser.
+
+Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
 
 ### Start Cider from Emacs:
 
@@ -16,17 +33,6 @@ Put this in your Emacs config file:
 ```
 
 Navigate to a clojurescript file and start a figwheel REPL with `cider-jack-in-clojurescript` or (`C-c M-J`)
-
-### Run application:
-
-```
-lein clean
-lein figwheel dev
-```
-
-Figwheel will automatically push cljs changes to the browser.
-
-Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
 
 ## Production Build
 
